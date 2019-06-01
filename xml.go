@@ -2,7 +2,7 @@ package main
 
 import "encoding/xml"
 
-type Vp struct {
+type Schedule struct {
 	XMLName xml.Name `xml:"vp"`
 	Head    Head     `xml:"kopf"`
 }

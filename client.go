@@ -8,20 +8,20 @@ import (
 	"net/http"
 )
 
-type ClientConfig struct {
+type ScheduleClientConfig struct {
 	User     string
 	Password string
 	Date     string
 	BaseURL  string
 }
 
-func (config ClientConfig) RequestXML() ([]byte, error) {
+func (config ScheduleClientConfig) RequestXML() ([]byte, error) {
 	requestURL := config.BaseURL + config.Date + ".xml"
-	client := http.Client{}
+	httpClient := http.Client{}
 	request, _ := http.NewRequest("GET", requestURL, nil)
 	request.Header.Add("authorization", encodeAsBasicAuth(config.User, config.Password))
 	log.Println("executing request to " + requestURL)
-	resp, respErr := client.Do(request)
+	resp, respErr := httpClient.Do(request)
 	if respErr != nil {
 		log.Println(respErr.Error())
 		return nil, errors.New("HTTP Error: " + respErr.Error())
