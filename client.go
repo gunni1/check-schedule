@@ -15,7 +15,7 @@ type ScheduleClientConfig struct {
 	BaseURL  string
 }
 
-func (config ScheduleClientConfig) RequestXML() ([]byte, error) {
+func RequestXML(config ScheduleClientConfig) ([]byte, error) {
 	requestURL := config.BaseURL + config.Date + ".xml"
 	httpClient := http.Client{}
 	request, _ := http.NewRequest("GET", requestURL, nil)

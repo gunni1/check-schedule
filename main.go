@@ -1,20 +1,22 @@
-package main 
+package main
 
 import (
 	"context"
-	"log"
+	"encoding/xml"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
+	"strings"
 	"time"
-	"github.com/aws/aws-lambda-go/lambda"
+
 )
 
 const (
-	userEnv = "PAGE_USER"
-	pwEnv   = "PAGE_PW"
-	dateEnv = "DATE"
-	codeEnv = "CODE"
+	userEnv    = "PAGE_USER"
+	pwEnv      = "PAGE_PW"
+	dateEnv    = "DATE"
+	codeEnv    = "CODE"
 	baseURLEnv = "BASE_URL"
 )
 
@@ -22,26 +24,38 @@ var (
 	dateFormat, _ = regexp.Compile("[0-9]{8}")
 )
 
-type MyEvent struct {
-	Name string `json:"name"`
+// PubSubMessage is the payload of a Pub/Sub event. Please refer to the docs for
+// additional information regarding Pub/Sub events.
+type PubSubMessage struct {
+	Data []byte `json:"data"`
 }
 
-func HandleRequest(ctx context.Context, name MyEvent) (string, error) {
+//Main to test it locally
+func main() {
+	CheckScheduleAndSignal(nil, PubSubMessage{Data: []byte("")})
+}
+
+func CheckScheduleAndSignal(ctx context.Context, m PubSubMessage) error {
 	code := parseEnvMandatory(codeEnv)
 	config := parseEnvToSchedulerConfig()
-	CheckScheduleAndSignal(config, code)
 
-	return "", nil
-}
-
-func main() {
-	lambda.Start(HandleRequest)
+	xmlResponse, _ := RequestXML(config)
+	var document Schedule
+	xml.Unmarshal(xmlResponse, &document)
+	log.Println("Prüfe Plan für: " + document.Head.Titel)
+	log.Println("Suche nach Kürzel: " + code)
+	if strings.Contains(document.Head.Info.ChangesTeacher, code+";") {
+		log.Println("Änderungen gefunden!")
+	} else {
+		log.Println("Keine relevanten Änderungen.")
+	}
+	return nil
 }
 
 func parseEnvToSchedulerConfig() ScheduleClientConfig {
 	username := parseEnvMandatory(userEnv)
 	password := parseEnvMandatory(pwEnv)
-	
+
 	baseURL := os.Getenv(baseURLEnv)
 	if baseURL == "" {
 		baseURL = "https://www.stundenplan24.de/10124219/vplanle/vdaten/VplanLe"
@@ -64,4 +78,3 @@ func parseEnvMandatory(variableKEy string) string {
 	}
 	return variableValue
 }
-
